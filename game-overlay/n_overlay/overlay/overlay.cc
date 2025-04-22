@@ -54,7 +54,7 @@ static auto _syncDragResizeBottom = [&](auto& window, std::int32_t /*xdiff*/, st
 
 bool isAlwaysInputAwareWindow(const std::string& name)
 {
-    return name == "StatusBar";
+    return true;
 }
 
 bool isAlwaysInputTransparentWindow(const std::string& name)
@@ -1121,8 +1121,6 @@ void OverlayConnector::_onOverlayInit(std::shared_ptr<overlay::OverlayInit>& ove
     {
         HookApp::instance()->startHook();
     }
-
-    directMessageInput_ = overlayMsg->directMessageInput;
 
     shareMemoryLock_.open(Storm::Utils::fromUtf8(overlayMsg->shareMemMutex));
 

@@ -123,19 +123,7 @@ void DxgiGraphics::beforePresent(IDXGISwapChain *swap)
 
         _checkAndResyncWindows();
 
-        if (HookApp::instance()->uiapp()->isInterceptingInput())
-        {
-            _drawBlockSprite();
-
-            _drawWindowSprites();
-        }
-
-#if 0
-        _drawMainSprite();
-#endif
-
-        _drawPopupTipSprite();
-        _drawStatutBarSprite();
+        _drawWindowSprites();
 
         _restoreStatus();
 

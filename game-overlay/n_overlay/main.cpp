@@ -31,7 +31,7 @@ INT WINAPI DllMain(HINSTANCE hModule, DWORD dwReason, LPVOID)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
-         trace::DebugConsole::allocDebugConsole();
+        //trace::DebugConsole::allocDebugConsole();
 
         DisableThreadLibraryCalls((HMODULE)hModule);
 
