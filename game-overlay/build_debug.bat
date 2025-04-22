@@ -1,0 +1,2 @@
+::"C:\Program Files\Microsoft Visual Studio\2022\Community\Msbuild\Current\Bin\MSBuild.exe" gameoverlay.sln /t:build /p:Configuration=Debug /p:Platform=Win32
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Msbuild\Current\Bin\MSBuild.exe" gameoverlay.sln /t:build /p:Configuration=Debug /p:Platform=x64
