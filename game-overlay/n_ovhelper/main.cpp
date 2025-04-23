@@ -153,7 +153,7 @@ bool startInject(DWORD pid, DWORD threadId, const std::wstring &dll)
     return succeed;
 }
 
-int main()
+int wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 {
     LPWSTR cmdlineRaw = GetCommandLineW();
     int numArgs = 0;
