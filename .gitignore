@@ -1,2 +1,5 @@
 .vs
-.vscode/game-overlay/bin
+.vscode
+/game-overlay/bin
+/electron-overlay/.vscode
+/electron-overlay/build_x64

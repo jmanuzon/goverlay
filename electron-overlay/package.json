@@ -4,18 +4,17 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "install": "node-gyp rebuild",
-        "compile": "node-gyp rebuild"
+        "install": "cmake-js rebuild --verbose"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "dependencies": {
-        "node-addon-api": "^4.1.0",
-        "node-gyp": "^3.8.0"
-    },
     "devDependencies": {
-        "electron-rebuild": "^3.2.7"
+        "cmake-js": "^7.3.1",
+        "node-addon-api": "^8.3.1"
+    },
+    "cmake-js": {
+        "runtime": "electron",
+        "runtimeVersion": "31.0.2"
     }
 }

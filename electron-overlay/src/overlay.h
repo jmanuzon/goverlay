@@ -1,12 +1,15 @@
 #pragma once
+#include <Windows.h>
 #include <napi.h>
-#include "utils/n-utils.h"
-#include "utils/node_async_call.h"
+#include <psapi.h>
 #include <assert.h>
 #include <set>
 #include <memory>
 #include <mutex>
 #include <iostream>
+
+#include "utils/n-utils.h"
+#include "utils/node_async_call.h"
 #include "ipc/tinyipc.h"
 #include "message/gmessage.hpp"
 #include "utils/win-utils.h"
@@ -442,7 +445,9 @@ class OverlayMain : public IIpcHost
         Napi::Function callback = info[0].As<Napi::Function>();
 
         eventCallback_ = std::make_shared<NodeEventCallback>(env, Napi::Persistent(callback), Napi::Persistent(info.This().ToObject()));
-
+        eventCallback_->callback.SuppressDestruct();
+        eventCallback_->receiver.SuppressDestruct();
+        
         return env.Undefined();
     }
 
