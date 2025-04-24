@@ -116,12 +116,6 @@ public:
 
     void clearMouseDrag();
 
-    void translateWindowsToDesktop();
-    void translateWindowsToGameClient();
-    void translateWindow(bool desktop);
-    void translateWindowsToGameClient(const std::shared_ptr<overlay::Window>&);
-
-
 protected:
     void _syncFocusWindowChanged();
     void _ensureTopWindows();

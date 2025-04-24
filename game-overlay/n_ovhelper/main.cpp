@@ -69,7 +69,7 @@ bool safeInjectDll(DWORD pid, DWORD threadId, const std::wstring &dll)
     typedef HHOOK(WINAPI * fn)(int, HOOKPROC, HINSTANCE, DWORD);
     HMODULE user32 = GetModuleHandleW(L"USER32");
     fn set_windows_hook_ex;
-    HMODULE lib = LoadLibraryExW(dll.c_str(), 0, DONT_RESOLVE_DLL_REFERENCES);
+    HMODULE lib = LoadLibraryExW(dll.c_str(), NULL, DONT_RESOLVE_DLL_REFERENCES);
     LPVOID proc;
     HHOOK hook;
 
@@ -118,8 +118,8 @@ bool safeInjectDll(DWORD pid, DWORD threadId, const std::wstring &dll)
     hook = set_windows_hook_ex(WH_GETMESSAGE, (HOOKPROC)proc, lib, threadId);
     if (!hook)
     {
-        DWORD err = GetLastError();
 #ifdef _DEBUG
+        DWORD err = GetLastError();
         std::wcout << L"SetWindowsHookEx failed: " << err;
 #endif
         return false;
@@ -177,7 +177,7 @@ int wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ int)
 
         std::wstring windowHandle = cmdLine[1];
         std::wstring dll = cmdLine[2];
-        const HWND hwnd = (HWND)(LONG_PTR)std::stoul(windowHandle);
+        const HWND hwnd = (HWND)(UINT_PTR)std::stoul(windowHandle);
 
         if (hwnd)
         {

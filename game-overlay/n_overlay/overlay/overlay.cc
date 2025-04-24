@@ -174,15 +174,6 @@ void OverlayConnector::sendGraphicsWindowFocusEvent(HWND window, bool focus)
     {
         clearMouseDrag();
     }
-
-    if (focus)
-    {
-        translateWindowsToGameClient();
-    }
-    else
-    {
-        translateWindowsToDesktop();
-    }
 }
 
 void OverlayConnector::sendGraphicsWindowDestroy(HWND window)
@@ -241,12 +232,12 @@ void OverlayConnector::unlockShareMem()
 
 void OverlayConnector::lockWindows()
 {
-    this->windowsLock_.lock();
+    windowsLock_.lock();
 }
 
 void OverlayConnector::unlockWindows()
 {
-    this->windowsLock_.unlock();
+    windowsLock_.unlock();
 }
 
 bool OverlayConnector::processNCHITTEST(UINT /*message*/, WPARAM /*wParam*/, LPARAM lParam, bool isBlockingAll)
@@ -716,56 +707,6 @@ void OverlayConnector::clearMouseDrag()
     hitTest_ = HTNOWHERE;
 }
 
-void OverlayConnector::translateWindowsToDesktop()
-{
-    translateWindow(true);
-}
-
-void OverlayConnector::translateWindowsToGameClient()
-{
-    translateWindow(false);
-}
-
-void OverlayConnector::translateWindowsToGameClient(const std::shared_ptr<overlay::Window>& window)
-{
-    auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
-    auto gameWidth = HookApp::instance()->uiapp()->gameWidth();
-    auto gameHeight = HookApp::instance()->uiapp()->gameHeight();
-    gameWidth = gameWidth ? gameWidth : screenWidth;
-    gameHeight = gameHeight ? gameHeight : screenHeight;
-
-    auto xscale = (float)gameWidth / (float)screenWidth;
-    auto yscale = (float)gameHeight / (float)screenHeight;
-
-    auto x = window->rect.x;
-    auto y = window->rect.y;
-}
-
-void OverlayConnector::translateWindow(bool desktop)
-{
-    checkThread(Threads::Window);
-
-    //might not be necessary
-
-    auto screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    auto screenHeight = GetSystemMetrics(SM_CYSCREEN);
-    auto gameWidth = HookApp::instance()->uiapp()->gameWidth();
-    auto gameHeight = HookApp::instance()->uiapp()->gameHeight();
-    gameWidth = gameWidth ? gameWidth : screenWidth;
-    gameHeight = gameHeight ? gameHeight : screenHeight;
-
-    auto xscale = desktop ? (float)screenWidth / (float)gameWidth : (float)gameWidth / (float)screenWidth;
-    auto yscale = desktop ? (float)screenHeight / (float)gameHeight : (float)gameHeight / (float)screenHeight;
-
-    std::lock_guard<std::mutex> lock(windowsLock_);
-    for (auto& window : windows_)
-    {
-        auto x = window->rect.x;
-        auto y = window->rect.y;
-    }
-}
-
 void OverlayConnector::_syncFocusWindowChanged()
 {
     HookApp::instance()->async([this]() {
@@ -851,7 +792,7 @@ void OverlayConnector::_sendGraphicsHookInfo(const overlay_game::DxgiHookInfo &i
 void OverlayConnector::_sendGraphicsWindowSetupInfo(HWND window, int width, int height, bool focus, bool hooked)
 {
     overlay::GraphicsWindowSetup message;
-    message.window = (std::uint32_t)window;
+    message.window = (std::uint32_t)(UINT_PTR)window;
     message.width = width;
     message.height = height;
     message.focus = focus;
@@ -873,8 +814,8 @@ void OverlayConnector::_sendGameWindowInput(std::uint32_t windowId, UINT msg, WP
     overlay::GameInput message;
     message.windowId = windowId;
     message.msg = msg;
-    message.wparam = wparam;
-    message.lparam = lparam;
+    message.wparam = static_cast<std::uint32_t>(wparam);
+    message.lparam = static_cast<std::uint32_t>(lparam);
 
     _sendMessage(&message);
 }
@@ -882,7 +823,7 @@ void OverlayConnector::_sendGameWindowInput(std::uint32_t windowId, UINT msg, WP
 void OverlayConnector::_sendGraphicsWindowResizeEvent(HWND window, int width, int height)
 {
     overlay::GraphicsWindowRezizeEvent message;
-    message.window = (std::uint32_t)window;
+    message.window = (std::uint32_t)(UINT_PTR)window;
     message.width = width;
     message.height = height;
 
@@ -892,7 +833,7 @@ void OverlayConnector::_sendGraphicsWindowResizeEvent(HWND window, int width, in
 void OverlayConnector::_sendGraphicsWindowFocusEvent(HWND window, bool focus)
 {
     overlay::GraphicsWindowFocusEvent message;
-    message.window = (std::uint32_t)window;
+    message.window = (std::uint32_t)(UINT_PTR)window;
     message.focus = focus;
 
     _sendMessage(&message);
@@ -901,7 +842,7 @@ void OverlayConnector::_sendGraphicsWindowFocusEvent(HWND window, bool focus)
 void OverlayConnector::_sendGraphicsWindowDestroy(HWND window)
 {
     overlay::GraphicsWindowDestroyEvent message;
-    message.window = (std::uint32_t)window;
+    message.window = (std::uint32_t)(UINT_PTR)window;
 
     _sendMessage(&message);
 }
@@ -1082,11 +1023,6 @@ void OverlayConnector::_onWindow(std::shared_ptr<overlay::Window>& overlayMsg)
     {
         std::lock_guard<std::mutex> lock(windowsLock_);
         windows_.push_back(overlayMsg);
-
-        if (HookApp::instance()->uiapp()->windowFocused())
-        {
-            translateWindowsToGameClient(overlayMsg);
-        }
 
         if (overlayMsg->name != "OverlayTip")
         {

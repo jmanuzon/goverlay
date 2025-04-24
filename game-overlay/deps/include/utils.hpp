@@ -41,7 +41,7 @@ inline std::wstring fromUtf8(const char *str, int size /*= -1*/)
 
 inline std::wstring fromUtf8(const std::string &str)
 {
-    return fromUtf8(str.c_str(), str.length());
+    return fromUtf8(str.c_str(), static_cast<int>(str.length()));
 }
 
 inline std::wstring fromLocal8Bit(const char *str, int size /*= -1*/)
@@ -51,7 +51,7 @@ inline std::wstring fromLocal8Bit(const char *str, int size /*= -1*/)
 
 inline std::wstring fromLocal8Bit(const std::string &str)
 {
-    return fromLocal8Bit(str.c_str(), str.length());
+    return fromLocal8Bit(str.c_str(), static_cast<int>(str.length()));
 }
 
 inline std::string toLocal8Bit(const wchar_t *wstr, int size /*= -1*/)
@@ -61,7 +61,7 @@ inline std::string toLocal8Bit(const wchar_t *wstr, int size /*= -1*/)
 
 inline std::string toLocal8Bit(const std::wstring &str)
 {
-    return toLocal8Bit(str.c_str(), str.length());
+    return toLocal8Bit(str.c_str(), static_cast<int>(str.length()));
 }
 
 inline std::string toUtf8(const wchar_t *wstr, int size /*= -1*/)
@@ -71,7 +71,7 @@ inline std::string toUtf8(const wchar_t *wstr, int size /*= -1*/)
 
 inline std::string toUtf8(const std::wstring &str)
 {
-    return toUtf8(str.c_str(), str.length());
+    return toUtf8(str.c_str(), static_cast<int>(str.length()));
 }
 
 inline std::string utf8ToLocal8Bit(const std::string &str)

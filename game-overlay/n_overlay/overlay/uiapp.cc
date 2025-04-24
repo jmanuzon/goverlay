@@ -76,16 +76,6 @@ bool UiApp::setup(HWND window)
 
         HookApp::instance()->overlayConnector()->sendGraphicsWindowSetupInfo(window, rect.right - rect.left, rect.bottom - rect.top, focused, true);
 
-        async([this]() {
-            if (this->graphicsWindow_)
-            {
-                if (GetForegroundWindow() == this->graphicsWindow_)
-                {
-                    HookApp::instance()->overlayConnector()->translateWindowsToGameClient();
-                }
-            }
-        });
-
         return true;
     }
     else
