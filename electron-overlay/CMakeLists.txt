@@ -26,13 +26,8 @@ cmake_print_variables(CMAKE_JS_NODELIB_TARGET)
 cmake_print_variables(CMAKE_SOURCE_DIR)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${CMAKE_JS_SRC})
+
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_JS_INC} ${NODE_ADDON_API_INCLUDE} ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/3rd)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_JS_LIB})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
-
-
-if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
-  # Generate node.lib
-  execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAGS})
-endif()

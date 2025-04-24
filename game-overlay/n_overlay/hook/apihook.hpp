@@ -48,20 +48,20 @@ struct ApiHook
     {
         if (!actived_)
         {
+            if (DetourTransactionBegin() != NO_ERROR)
+                return false;
 
-            MH_STATUS r = MH_CreateHook(pTarget_, pHooked_, (LPVOID *)&ppOriginal_);
-            if (MH_OK == r)
+            if (DetourUpdateThread(GetCurrentThread()) != NO_ERROR)
+                return false;
+
+            if (DetourAttach((PVOID*)&pTarget_, pHooked_) != NO_ERROR)
             {
-                r = MH_EnableHook(pTarget_);
-                if (MH_OK == r)
-                {
-                    actived_ = true;
-                }
-                else
-                {
-                    MH_RemoveHook(pTarget_);
-                    ppOriginal_ = nullptr;
-                }
+                DetourTransactionAbort();
+            }
+            else
+            {
+                actived_ = DetourTransactionCommit() == NO_ERROR;
+                ppOriginal_ = force_cast<DWORD_PTR*, Fn>(pTarget_);
             }
         }
 
@@ -72,8 +72,24 @@ struct ApiHook
     {
         if (actived_)
         {
-            MH_RemoveHook(pTarget_);
+            if (DetourTransactionBegin() != NO_ERROR)
+                return;
+
+            if (DetourUpdateThread(GetCurrentThread()) != NO_ERROR)
+                return;
+
+            if (DetourDetach((PVOID*)&pTarget_, pHooked_) != NO_ERROR)
+            {
+                DetourTransactionAbort();
+            }
+            else
+            {
+                DetourTransactionCommit();
+                actived_ = false;
+                ppOriginal_ = nullptr;
+            }
         }
+
         actived_ = false;
     }
 

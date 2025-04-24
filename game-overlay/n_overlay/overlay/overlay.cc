@@ -52,7 +52,7 @@ static auto _syncDragResizeBottom = [&](auto& window, std::int32_t /*xdiff*/, st
     window->rect.height = curHeight;
 };
 
-bool isAlwaysInputAwareWindow(const std::string& name)
+bool isAlwaysInputAwareWindow(const std::string&)
 {
     return true;
 }
@@ -241,17 +241,12 @@ void OverlayConnector::unlockShareMem()
 
 void OverlayConnector::lockWindows()
 {
-    windowsLock_.lock();
+    this->windowsLock_.lock();
 }
 
 void OverlayConnector::unlockWindows()
 {
-    windowsLock_.unlock();
-}
-
-bool OverlayConnector::directMessageInput() const
-{
-    return directMessageInput_;
+    this->windowsLock_.unlock();
 }
 
 bool OverlayConnector::processNCHITTEST(UINT /*message*/, WPARAM /*wParam*/, LPARAM lParam, bool isBlockingAll)
@@ -366,8 +361,6 @@ bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM l
                         dragMoveLastMousePos_.x = mousePointInGameClient.x - window->rect.x;
                         dragMoveLastMousePos_.y = mousePointInGameClient.y - window->rect.y;
 
-                        SetWindowPos((HWND)window->nativeHandle, NULL, window->rect.x, window->rect.y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-
                         this->windowBoundsEvent()(dragMoveWindowId_, window->rect);
                     }
                     else
@@ -412,23 +405,12 @@ bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM l
                         dragMoveLastMousePos_.x = mousePointInGameClient.x - window->rect.x;
                         dragMoveLastMousePos_.y = mousePointInGameClient.y - window->rect.y;
 
-                        SetWindowPos((HWND)window->nativeHandle, NULL, window->rect.x, window->rect.y, window->rect.width, window->rect.height, SWP_NOZORDER | SWP_NOACTIVATE);
-
                         this->windowBoundsEvent()(dragMoveWindowId_, window->rect);
                     }
                     return true;
                 }
                 else if (message == WM_LBUTTONUP)
                 {
-                    if (directMessageInput_)
-                    {
-                        POINT mousePointinWindowClient = { mousePointInGameClient.x, mousePointInGameClient.y };
-                        mousePointinWindowClient.x -= window->rect.x;
-                        mousePointinWindowClient.y -= window->rect.y;
-                        DWORD pos = mousePointinWindowClient.x + (mousePointinWindowClient.y << 16);
-                        lParam = (LPARAM)pos;
-                        PostMessage((HWND)window->nativeHandle, message, wParam, lParam);
-                    }
                     clearMouseDrag();
                 }
             }
@@ -466,21 +448,9 @@ bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM l
             DWORD pos = mousePointinWindowClient.x + (mousePointinWindowClient.y << 16);
             lParam = (LPARAM)pos;
 
-            if (directMessageInput_)
-            {
-                if (message == WM_MOUSEWHEEL)
-                {
-                    DWORD pos = mousePointInGameClient.x + (mousePointInGameClient.y << 16);
-                    lParam = (LPARAM)pos;
-                }
-                PostMessage((HWND) window->nativeHandle, message, wParam, lParam);
-            }
-            else
-            {
-                HookApp::instance()->async([this, windowId = window->windowId, message, wParam, lParam]() {
-                    _sendGameWindowInput(windowId, message, wParam, lParam);
-                });
-            }
+			HookApp::instance()->async([this, windowId = window->windowId, message, wParam, lParam]() {
+				_sendGameWindowInput(windowId, message, wParam, lParam);
+				});
 
             if (message == WM_LBUTTONUP)
             {
@@ -585,23 +555,11 @@ bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM l
                 mousePressWindowId_ = 0;
             }
 
-            if (directMessageInput_)
+            if (dragMoveWindowId_ == 0)
             {
-                if (message == WM_MOUSEWHEEL)
-                {
-                    DWORD pos = mousePointInGameClient.x + (mousePointInGameClient.y << 16);
-                    lParam = (LPARAM)pos;
-                }
-                PostMessage((HWND)window->nativeHandle, message, wParam, lParam);
-            }
-            else
-            {
-                if (dragMoveWindowId_ == 0)
-                {
-                    HookApp::instance()->async([this, windowId = window->windowId, message, wParam, lParam]() {
-                        _sendGameWindowInput(windowId, message, wParam, lParam);
+                HookApp::instance()->async([this, windowId = window->windowId, message, wParam, lParam]() {
+                    _sendGameWindowInput(windowId, message, wParam, lParam);
                     });
-                }
             }
 
             if (focusWindowId_)
@@ -627,24 +585,6 @@ bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM l
         }
     }
 
-    // notify mouse is not accepted
-
-    if (directMessageInput_)
-    {
-    }
-    else
-    {
-        //todo: modify electron browser view focus state
-        if (message == WM_LBUTTONDOWN)
-        {
-
-        }
-
-        /*HookApp::instance()->async([this, windowId = 0, message, wParam, lParam]() {
-            _sendGameWindowInput(windowId, message, wParam, lParam);
-        });*/
-    }
-
     if (message == WM_LBUTTONDOWN)
     {
         focusWindowId_ = 0;
@@ -660,16 +600,10 @@ bool OverlayConnector::processkeyboardMessage(UINT message, WPARAM wParam, LPARA
 {
     if (focusWindowId_ != 0)
     {
-        if (directMessageInput_)
-        {
-            PostMessage((HWND)focusWindow_.load(), message, wParam, lParam);
-        }
-        else
-        {
-            HookApp::instance()->async([this, windowId = focusWindowId_.load(), message, wParam, lParam]() {
-                _sendGameWindowInput(windowId, message, wParam, lParam);
+        HookApp::instance()->async([this, windowId = focusWindowId_.load(), message, wParam, lParam]() {
+            _sendGameWindowInput(windowId, message, wParam, lParam);
             });
-        }
+
         return true;
     }
     else
@@ -806,8 +740,6 @@ void OverlayConnector::translateWindowsToGameClient(const std::shared_ptr<overla
 
     auto x = window->rect.x;
     auto y = window->rect.y;
-
-    SetWindowPos((HWND)window->nativeHandle, nullptr, (int)(x * xscale), (int)(y * yscale), 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
 void OverlayConnector::translateWindow(bool desktop)
@@ -831,8 +763,6 @@ void OverlayConnector::translateWindow(bool desktop)
     {
         auto x = window->rect.x;
         auto y = window->rect.y;
-
-        SetWindowPos((HWND)window->nativeHandle, nullptr, (int)(x * xscale), (int)(y * yscale), 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOZORDER);
     }
 }
 

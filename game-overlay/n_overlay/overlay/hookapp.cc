@@ -65,7 +65,6 @@ HookApp::~HookApp()
 
 void HookApp::initialize()
 {
-    MH_Initialize();
     g_hookAppThread = HookApp::start();
 }
 
@@ -80,8 +79,6 @@ void HookApp::uninitialize()
             TerminateThread(g_hookAppThread, 0);
         }
     }
-
-    MH_Uninitialize();
 }
 
 HookApp * HookApp::instance()
@@ -247,11 +244,13 @@ bool HookApp::findGameWindow()
 
         EnumWindows(findGraphicsWindow, (LPARAM)&param);
 
-        if (param.window)
-        {
-            LOGGER("n_overlay") << "setGraphicsWindow by enum: " << param.window;
-            session::setGraphicsWindow(param.window);
-        }
+		auto window = GetForegroundWindow();
+		DWORD pid{};
+		GetWindowThreadProcessId(window, &pid);
+		if (pid == GetCurrentProcessId())
+		{
+            session::setGraphicsWindow(window);
+		}
     }
 
     std::cout << __FUNCTION__ << ", injectWindow: " << session::injectWindow() << std::endl;
