@@ -429,7 +429,7 @@ LRESULT UiApp::hookWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 #endif
     }
 
-    if (session::graphicsActive())
+    if (session::graphicsActive() && !HookApp::instance()->isQuitSet())
     {
         if (!isIntercepting_)
         {
@@ -499,7 +499,7 @@ LRESULT UiApp::hookGetMsgProc(_In_ int nCode, _In_ WPARAM wParam, _In_ LPARAM lP
         {
             stopInputIntercept();
         }
-        if (session::graphicsActive())
+        if (session::graphicsActive() && !HookApp::instance()->isQuitSet())
         {
             MSG* pMsg = (MSG*)lParam;
             if (pMsg->hwnd == graphicsWindow_ && wParam == PM_REMOVE)
