@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(electron-overlay)
+project(electron_overlay)
 include(CMakePrintHelpers)
 
 add_definitions(-DNAPI_VERSION=7)
