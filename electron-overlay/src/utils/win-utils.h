@@ -144,6 +144,21 @@ inline std::wstring moduleDirPath()
     return dirPath;
 }
 
+inline std::wstring moduleRootDirPath()
+{
+    WCHAR szPath[MAX_PATH] = {0};
+    GetModuleFileNameW(NULL, szPath, _countof(szPath));
+
+    WCHAR achLongPath[MAX_PATH] = {0};
+    TCHAR **lppPart = {NULL};
+    ::GetFullPathNameW(szPath, MAX_PATH, achLongPath, lppPart);
+
+    std::wstring dirPath = achLongPath;
+    size_t lastSepartor = dirPath.find_last_of('\\');
+    dirPath.erase(lastSepartor);
+    return dirPath;
+}
+
 inline bool customizeUIPIPolicy(HWND window, UINT message, bool add)
 {
     typedef BOOL(WINAPI * fnExType)(

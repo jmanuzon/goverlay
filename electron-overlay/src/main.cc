@@ -1,4 +1,5 @@
 #include "overlay.h"
+#include <filesystem>
 
 namespace overlay
 {
@@ -120,8 +121,7 @@ struct window_hook_info
 
 static inline bool file_exists(const std::wstring& file)
 {
-    WIN32_FILE_ATTRIBUTE_DATA findData;
-    return 0 != ::GetFileAttributesEx(file.c_str(), GetFileExInfoStandard, &findData);
+  return std::filesystem::exists(file);
 }
 
 
@@ -245,56 +245,86 @@ static bool is_64bit_process(DWORD processId)
   return is_64bit_process(process.handle);
 }
 
-static std::wstring get_inject_helper_path(bool x64)
+static std::wstring get_inject_helper_path(bool x64, bool isAsar = false)
 {
 
-  std::wstring dir = Windows::moduleDirPath();
-
-  std::wstring helper;
-  if (x64)
+  std::filesystem::path base{};
+  if (isAsar)
   {
-    helper = dir + L"\\" + k_inject_helper_x64;
+    base = Windows::moduleRootDirPath();
   }
   else
   {
-    helper = dir + L"\\" + k_inject_helper;
+    base = Windows::moduleDirPath();
+  }
+
+  std::filesystem::path helper{};
+  if (x64)
+  {
+    if (isAsar)
+    {
+      helper = base / "resources" / k_inject_helper_x64;
+    }
+    else
+    {
+      helper = base / k_inject_helper_x64;
+    }
+  }
+  else
+  {
+    if (isAsar)
+    {
+      helper = base / "resources" / k_inject_helper;
+    }
+    else
+    {
+      helper = base / k_inject_helper;
+    }
   }
 
   return helper;
 }
 
-static std::wstring get_inject_dll_path(bool x64)
+static std::wstring get_inject_dll_path(bool x64, bool isAsar = false)
 {
-  std::wstring dir = Windows::moduleDirPath();
-  std::wstring dll;
-  if (x64)
+  std::filesystem::path base{};
+  if (isAsar)
   {
-    dll = dir + L"\\" + k_inject_dll_x64;
+    base = Windows::moduleRootDirPath();
   }
   else
   {
-    dll = dir + L"\\" + k_inject_dll;
+    base = Windows::moduleDirPath();
+  }
+
+  std::filesystem::path dll{};
+  if (x64)
+  {
+    if (isAsar)
+    {
+      dll = base / "resources" / k_inject_dll_x64;
+    }
+    else
+    {
+      dll = base / k_inject_dll_x64;
+    }
+  }
+  else
+  {
+    if (isAsar)
+    {
+      dll = base / "resources" / k_inject_dll;
+    }
+    else
+    {
+      dll = base / k_inject_dll;
+    }
   }
   return dll;
 }
 
-static bool inject_process( HWND window, bool x64)
+static bool inject_process( HWND window, bool x64, const std::wstring& dll, const std::wstring& helper)
 {
-  std::wstring dir = Windows::moduleDirPath();
-
-  std::wstring helper;
-  std::wstring dll;
-  if (x64)
-  {
-    helper = dir + L"\\" + k_inject_helper_x64;
-    dll = dir + L"\\" + k_inject_dll_x64;
-  }
-  else
-  {
-    helper = dir + L"\\" + k_inject_helper;
-    dll = dir + L"\\" + k_inject_dll;
-  }
-
   std::wstring args = std::to_wstring((std::uint32_t)(UINT_PTR)window) + L" \"" + dll + L"\"";
   return Windows::createProcess(helper, args);
 }
@@ -346,14 +376,23 @@ Napi::Value injectProcess(const Napi::CallbackInfo &info)
   Napi::Object object = info[0].ToObject();
   const std::uint32_t windowId = object.Get("windowId").ToNumber().Uint32Value();
   const std::uint32_t processId = object.Get("processId").ToNumber().Uint32Value();
-  // const std::uint32_t threadId = object.Get("threadId").ToNumber().Uint32Value();
+
 
   const bool x64 = is_64bit_process(processId);
-  std::wstring helper_path = get_inject_helper_path(x64);
-  std::wstring dll_path = get_inject_dll_path(x64);
-  const bool inject_helper_exist = file_exists(helper_path);
-  const bool inject_dll_exist = file_exists(dll_path);
-  const bool injected = inject_process((HWND)(UINT_PTR)windowId, x64);
+
+  std::wstring helper_path = get_inject_helper_path(x64, true);
+  if (!file_exists(helper_path))
+  {
+    helper_path = get_inject_helper_path(x64, false);
+  }
+
+  std::wstring dll_path = get_inject_dll_path(x64, true);
+  if (!file_exists(dll_path))
+  {
+    dll_path = get_inject_dll_path(x64, false);
+  }
+
+  const bool injected = inject_process((HWND)(UINT_PTR)windowId, x64, dll_path, helper_path);
 
   auto result = Napi::Object::New(env);
 

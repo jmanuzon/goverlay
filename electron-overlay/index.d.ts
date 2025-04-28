@@ -1,9 +1,6 @@
 /// <reference types="node" />
 
-import { InputEvent } from "electron";
-
 declare module "electron-overlay" {
-
     export interface IHotkey{
         name: string;
         keyCode: number;
@@ -66,12 +63,22 @@ declare module "electron-overlay" {
     }
 
     //TODO: need to add more events here
-    export type OverlayArgs = { windowId: number;
+    export type OverlayWindowArg = {
+        windowId: number;
         msg: number;
         wparam: number;
-        lparam: number; }
-    | { focusWindowId: number }
-    | { path: string };
+        lparam: number;
+    }
+
+    export type OverlayFocusWindowArg = {
+        focusWindowId: number;    
+    }
+
+    export type OverlayGameProcessArg = {
+        path: string;
+    }
+
+    export type OverlayArgs = OverlayWindowArg | OverlayFocusWindowArg | OverlayGameProcessArg;
     
     export type OverlayInputEvent = Electron.MouseInputEvent | Electron.MouseWheelInputEvent | Electron.KeyboardInputEvent;
 
@@ -89,5 +96,5 @@ declare module "electron-overlay" {
     export function closeWindow(windowId: number): void;
     export function sendWindowBounds(windowId: number, details: {rect: IRectangle}): void;
     export function sendFrameBuffer(windowId: number, buffer: Buffer, width: number, height: number): void;
-    export function translateInputEvent(event: {windowId: number, msg: number, wparam: number, lparam: number}): OverlayInputEvent;
+    export function translateInputEvent(event: OverlayWindowArg): OverlayInputEvent;
 }
