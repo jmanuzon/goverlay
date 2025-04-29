@@ -3,7 +3,7 @@
 #include "hookapp.h"
 #include "hook/inputhook.h"
 
-const char k_overlayIpcName[] = "n_overlay_1a1y2o8l0b";
+const char k_overlayIpcName[] = "overlay-3F156E63-09D4-48DB-8915-D4D40FFC28E2";
 
 
 static auto _syncDragResizeLeft = [&](auto& window, std::int32_t xdiff, std::int32_t /*ydiff*/) {
