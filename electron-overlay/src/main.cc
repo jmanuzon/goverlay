@@ -329,6 +329,20 @@ static bool inject_process( HWND window, bool x64, const std::wstring& dll, cons
   return Windows::createProcess(helper, args);
 }
 
+static int getScaleFactor()
+{
+  HMONITOR hMonitor = MonitorFromWindow(NULL, MONITOR_DEFAULTTOPRIMARY);
+
+  DEVICE_SCALE_FACTOR scaleFactor;
+  
+  if (GetScaleFactorForMonitor(hMonitor, &scaleFactor) == S_OK)
+  {
+      return static_cast<int>(scaleFactor);
+  }
+
+  return 0;
+}
+
 Napi::Value getTopWindows(const Napi::CallbackInfo &info)
 {
   Napi::Env env = info.Env();
@@ -402,6 +416,13 @@ Napi::Value injectProcess(const Napi::CallbackInfo &info)
   return Napi::Value::From(env, result);
 }
 
+Napi::Number getWindowsScaleFactor(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+  const int scaleFactor = getScaleFactor();
+  return Napi::Number::New(env, static_cast<float>(scaleFactor)/100);
+}
+
 } // namespace overlay
 
 Napi::Object Init(Napi::Env env, Napi::Object exports)
@@ -420,6 +441,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports)
     exports.Set(Napi::String::New(env, "sendWindowBounds"), Napi::Function::New(env, overlay::sendWindowBounds));
     exports.Set(Napi::String::New(env, "sendFrameBuffer"), Napi::Function::New(env, overlay::sendFrameBuffer));
     exports.Set(Napi::String::New(env, "translateInputEvent"), Napi::Function::New(env, overlay::translateInputEvent));
+    exports.Set(Napi::String::New(env, "getWindowsScaleFactor"), Napi::Function::New(env, overlay::getWindowsScaleFactor));
 
     return exports;
 }

@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <iostream>
+#include <ShellScalingApi.h>
 
 #include "utils/n-utils.h"
 #include "utils/node_async_call.h"

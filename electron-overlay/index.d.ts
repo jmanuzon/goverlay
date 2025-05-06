@@ -97,4 +97,5 @@ declare module "electron-overlay" {
     export function sendWindowBounds(windowId: number, details: {rect: IRectangle}): void;
     export function sendFrameBuffer(windowId: number, buffer: Buffer, width: number, height: number): void;
     export function translateInputEvent(event: OverlayWindowArg): OverlayInputEvent;
+    export function getWindowsScaleFactor(): number;
 }
