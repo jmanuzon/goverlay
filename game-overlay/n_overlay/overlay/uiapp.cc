@@ -5,6 +5,7 @@
 #include "hookapp.h"
 #include "hook/inputhook.h"
 #include "hotkey/hotkeycheck.h"
+#include "windowsx.h"
 
 #if ALLOW_ASSOC_SYSIME
 #pragma comment(lib, "imm32.lib")
@@ -441,7 +442,7 @@ LRESULT UiApp::hookWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
                 auto connector = HookApp::instance()->overlayConnector();
                 if (connector != nullptr && connector->focusWindowId() != 0)
                 {
-                    POINT mousePoint = { LOWORD(lParam), HIWORD(lParam) };
+                    POINT mousePoint{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
                     bool clickedOutside = true;
 
                     // Lock and do everything while holding the lock (like _onWindowClose does)

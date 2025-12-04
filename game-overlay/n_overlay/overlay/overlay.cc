@@ -2,6 +2,7 @@
 #include "overlay.h"
 #include "hookapp.h"
 #include "hook/inputhook.h"
+#include "windowsx.h"
 
 const char k_overlayIpcName[] = "overlay-3F156E63-09D4-48DB-8915-D4D40FFC28E2";
 
@@ -321,7 +322,7 @@ bool OverlayConnector::processNCHITTEST(UINT /*message*/, WPARAM /*wParam*/, LPA
 bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM lParam, bool isBlockingAll)
 {
     std::lock_guard<std::mutex> lock(windowsLock_);
-    POINT mousePointInGameClient{ LOWORD(lParam), HIWORD(lParam) };
+    POINT mousePointInGameClient{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
     {
         std::lock_guard<std::recursive_mutex> lock(mouseDragLock_);
