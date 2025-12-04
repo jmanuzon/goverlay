@@ -438,33 +438,30 @@ LRESULT UiApp::hookWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
             if (!isInterceptingMouseAuto_)
 #endif
             {
-                if (HookApp::instance()->overlayConnector()->focusWindowId() != 0)
+                auto connector = HookApp::instance()->overlayConnector();
+                if (connector != nullptr && connector->focusWindowId() != 0)
                 {
-                    auto connector = HookApp::instance()->overlayConnector();
-                    if (connector != nullptr)
-                    { 
-                        POINT mousePoint = { LOWORD(lParam), HIWORD(lParam) };
-                        bool clickedOutside = true;
+                    POINT mousePoint = { LOWORD(lParam), HIWORD(lParam) };
+                    bool clickedOutside = true;
 
-                        // Lock and do everything while holding the lock (like _onWindowClose does)
-                        connector->lockWindows();
-                        const auto& windows = connector->windows();
-                        for (const auto& window : windows)
+                    // Lock and do everything while holding the lock (like _onWindowClose does)
+                    connector->lockWindows();
+                    const auto& windows = connector->windows();
+                    for (const auto& window : windows)
+                    {
+                        if (overlay_game::pointInRect(mousePoint, window->rect))
                         {
-                            if (overlay_game::pointInRect(mousePoint, window->rect))
-                            {
-                                clickedOutside = false;
-                                break;
-                            }
+                            clickedOutside = false;
+                            break;
                         }
-
-                        // Clear focus while still holding the lock (same pattern as _onWindowClose)
-                        if (clickedOutside && connector->focusWindowId() != 0)
-                        {
-                            connector->clearFocusWindow();
-                        }
-                        connector->unlockWindows();
                     }
+
+                    // Clear focus while still holding the lock (same pattern as _onWindowClose)
+                    if (clickedOutside && connector->focusWindowId() != 0)
+                    {
+                        connector->clearFocusWindow();
+                    }
+                    connector->unlockWindows();
                 }
             }
         }
