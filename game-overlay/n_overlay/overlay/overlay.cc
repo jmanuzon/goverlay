@@ -576,14 +576,6 @@ bool OverlayConnector::processMouseMessage(UINT message, WPARAM wParam, LPARAM l
         }
     }
 
-    if (message == WM_LBUTTONDOWN)
-    {
-        focusWindowId_ = 0;
-        focusWindow_ = 0;
-
-        _syncFocusWindowChanged();
-    }
-
     return false;
 }
 
@@ -707,9 +699,24 @@ void OverlayConnector::clearMouseDrag()
     hitTest_ = HTNOWHERE;
 }
 
+void OverlayConnector::clearFocusWindow()
+{
+    focusWindowId_ = 0;
+    focusWindow_ = 0;
+    _syncFocusWindowChanged();
+    this->windowFocusEvent()(focusWindowId_);
+}
+
 void OverlayConnector::_syncFocusWindowChanged()
 {
+
+    if (lastFocusWindow_ == focusWindowId_)
+    {
+        return;
+    }
+
     HookApp::instance()->async([this]() {
+        lastFocusWindow_.store(focusWindowId_.load());
         _sendInGameWindowFocused(focusWindowId_);
     });
 }
