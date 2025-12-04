@@ -5,6 +5,7 @@
 #include "hookapp.h"
 #include "hook/inputhook.h"
 #include "hotkey/hotkeycheck.h"
+#include "windowsx.h"
 
 #if ALLOW_ASSOC_SYSIME
 #pragma comment(lib, "imm32.lib")
@@ -431,6 +432,41 @@ LRESULT UiApp::hookWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 
     if (session::graphicsActive() && !HookApp::instance()->isQuitSet())
     {
+        // Clear focus when clicking outside overlays
+        if (Msg == WM_LBUTTONDOWN && !isIntercepting_)
+        {
+#if AUTO_INPUT_INTERCEPT
+            if (!isInterceptingMouseAuto_)
+#endif
+            {
+                auto connector = HookApp::instance()->overlayConnector();
+                if (connector != nullptr && connector->focusWindowId() != 0)
+                {
+                    POINT mousePoint{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                    bool clickedOutside = true;
+
+                    // Lock and do everything while holding the lock (like _onWindowClose does)
+                    connector->lockWindows();
+                    const auto& windows = connector->windows();
+                    for (const auto& window : windows)
+                    {
+                        if (overlay_game::pointInRect(mousePoint, window->rect))
+                        {
+                            clickedOutside = false;
+                            break;
+                        }
+                    }
+
+                    // Clear focus while still holding the lock (same pattern as _onWindowClose)
+                    if (clickedOutside && connector->focusWindowId() != 0)
+                    {
+                        connector->clearFocusWindow();
+                    }
+                    connector->unlockWindows();
+                }
+            }
+        }
+
         if (!isIntercepting_)
         {
 

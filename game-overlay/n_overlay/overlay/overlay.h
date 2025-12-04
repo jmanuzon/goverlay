@@ -15,6 +15,7 @@ class OverlayConnector : public IIpcClient
     std::vector<std::shared_ptr<overlay::Window>> windows_;
     std::atomic<std::uint32_t> focusWindowId_ = 0;
     std::atomic<std::uint32_t> focusWindow_ = 0;
+    std::atomic<std::uint32_t> lastFocusWindow_ = 0;
 
     std::mutex framesLock_;
     std::map<std::uint32_t, std::shared_ptr<overlay_game::FrameBuffer>> frameBuffers_;
@@ -115,6 +116,7 @@ public:
     bool processSetCursor();
 
     void clearMouseDrag();
+    void clearFocusWindow();
 
 protected:
     void _syncFocusWindowChanged();
